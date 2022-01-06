@@ -2,6 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 local Players = game:GetService("Players")
 local PhysicsService = game:GetService("PhysicsService")
+local CollectionService = game:GetService("CollectionService")
 
 local Ball = ReplicatedStorage.Assets.Ball
 
@@ -43,7 +44,7 @@ function MapService:TeleportPlayersIn()
             hrp.CFrame = CFrame.new(point.Position + Vector3.new(0, 2, 0))
             GetHumanoid(currentPlayer):Match {
                 Some = function(humanoid)
-                    humanoid.WalkSpeed = 25
+                    humanoid.WalkSpeed = 18
                 end;
                 None = function() end
             }
@@ -58,7 +59,7 @@ function MapService:TeleportPlayersIn()
             hrp.CFrame = CFrame.new(point.Position + Vector3.new(0, 2, 0))
             GetHumanoid(currentPlayer):Match {
                 Some = function(humanoid)
-                    humanoid.WalkSpeed = 25
+                    humanoid.WalkSpeed = 18
                 end;
                 None = function() end
             }
@@ -91,7 +92,8 @@ function MapService:SpawnBalls()
     for _,point in ipairs(MapService.BallSpawns:GetChildren()) do
         local newBall = Ball:Clone()
         newBall.Position = point.Position + Vector3.new(0, .5, 0)
-        newBall.Parent = point
+        newBall.Parent = workspace
+        CollectionService:AddTag(newBall, "Ball")
     end
 end
 

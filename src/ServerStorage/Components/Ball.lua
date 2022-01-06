@@ -7,10 +7,7 @@ local Trove = require(ReplicatedStorage.Packages.Trove)
 local Option = require(ReplicatedStorage.Packages.Option)
 local Component = require(ReplicatedStorage.Packages.Component)
 
-local Ball = {}
-Ball.__index = Ball
-
-Ball.Tag = "Ball"
+local BallConfig = require(script.Parent.BallConfig)
 
 local BallColors = {
     Color3.fromRGB(255, 0, 0),
@@ -127,7 +124,7 @@ end
 function Ball:_fire(lookVector)
     local bodyVelocity = Instance.new("BodyVelocity")
     bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
-    bodyVelocity.Velocity = (lookVector * 75) + Vector3.new(0, 20, 0)
+    bodyVelocity.Velocity = (lookVector * BallConfig.VELOCITY) + Vector3.new(0, BallConfig.HEIGHT, 0)
     bodyVelocity.Parent = self.Instance
     self.Instance.Anchored = false
     self.Instance:SetNetworkOwner()
@@ -138,11 +135,11 @@ end
 
 function Ball:_resetOwner()
     self.Instance:SetAttribute("PlayerId", 0)
+    self.Instance.Parent = workspace
 end
 
 
 function Ball:_listenForTouches()
-
     local playerTrove = Trove.new()
     self._trove:Add(playerTrove)
     self._playerTrove = playerTrove
@@ -183,9 +180,6 @@ function Ball:_listenForTouches()
 
         playerTrove:Add(function()
             self.Instance.CanCollide = true
-            if self.Instance.Parent then
-                self.Instance.Parent = workspace
-            end
         end)
         playerTrove:Add(attachment)
         playerTrove:Add(alignPos)
@@ -199,6 +193,7 @@ function Ball:_listenForTouches()
     end
 
     local function DetachFromPlayer()
+        self.Instance.Parent = workspace
         playerTrove:Clean()
     end
 
@@ -256,11 +251,14 @@ end
 
 function Ball:Throw(lookVector)
     local plr = Players:GetPlayerByUserId(self.Instance:GetAttribute("PlayerId"))
-    if plr.Character and self._ready then
-        self._ready = false
-        self:_prepareThrow(plr)
-        self:_fire(lookVector)
-        self:_resetOwner()
+    print("player:",plr)
+    if plr then
+        if plr.Character and self._ready then
+            self._ready = false
+            self:_prepareThrow(plr)
+            self:_fire(lookVector)
+            self:_resetOwner()
+        end
     end
 end
 
@@ -271,7 +269,7 @@ function Ball:Start()
 end
 
 function Ball:Stop()
-    print("Stopped")
+    print("Stopping")
     self._trove:Destroy()
 end
 
