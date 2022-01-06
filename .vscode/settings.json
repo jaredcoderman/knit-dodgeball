@@ -1,0 +1,8 @@
+{
+    "robloxLsp.diagnostics.globals": [
+        "GameServicelocal"
+    ],
+    "robloxLsp.diagnostics.disable": [
+        "unused-function"
+    ]
+}
