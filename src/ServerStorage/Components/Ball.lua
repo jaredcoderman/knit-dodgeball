@@ -251,7 +251,6 @@ end
 
 function Ball:Throw(lookVector)
     local plr = Players:GetPlayerByUserId(self.Instance:GetAttribute("PlayerId"))
-    print("player:",plr)
     if plr then
         if plr.Character and self._ready then
             self._ready = false
