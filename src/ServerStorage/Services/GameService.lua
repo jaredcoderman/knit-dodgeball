@@ -43,6 +43,8 @@ end
 
 function GameService:KnitStart()
     self.TeamService = Knit.GetService("TeamService")
+    self.LobbyService = Knit.GetService("LobbyService")
+
     self.TeamService.TeamsFull:Connect(function()
         self:StartGame()
     end)

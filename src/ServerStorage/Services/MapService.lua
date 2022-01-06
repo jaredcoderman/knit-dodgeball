@@ -88,15 +88,10 @@ function MapService:TeleportPlayersOut(players)
 end
 
 function MapService:SpawnBalls()
-    local BallService = Knit.GetService("BallService")
-    
     for _,point in ipairs(MapService.BallSpawns:GetChildren()) do
         local newBall = Ball:Clone()
         newBall.Position = point.Position + Vector3.new(0, .5, 0)
         newBall.Parent = point
-        
-        local newBallComponent = BallComponent:Construct()
-        BallService.BallComponents[newBall] = newBallComponent
     end
 end
 

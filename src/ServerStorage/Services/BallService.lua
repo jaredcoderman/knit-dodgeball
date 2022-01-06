@@ -13,8 +13,6 @@ local BallService = Knit.CreateService {
     Client = {},
 }
 
-BallService.BallComponents = {}
-
 function BallService.Client:Throw(plr, lookVector)
     local function GetBall()
         if plr.Character then
@@ -43,13 +41,10 @@ function BallService.Client:Throw(plr, lookVector)
 end
 
 function BallService:ResetBalls()
-    for ball, _ in pairs(BallService.BallComponents) do
-        local componentInstance = Component.FromInstance(ball, Ball)
-        if componentInstance then
-            componentInstance:Destroy()
-        end
+    local ballComponents = Ball:GetAll()
+    for _,component in ipairs(ballComponents) do
+        component.Instance:Destroy()
     end
-    BallService.BallComponents = {}
 end
 
 function BallService:KnitStart()
