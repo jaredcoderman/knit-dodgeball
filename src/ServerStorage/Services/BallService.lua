@@ -3,11 +3,10 @@ local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Map = workspace:WaitForChild("Map")
-local BallSpawns = Map:WaitForChild("BallSpawns")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
-local Signal = require(ReplicatedStorage.Packages.Signal)
 local Ball = require(ServerStorage.Source.Components.Ball)
+local Component = require(ReplicatedStorage.Packages.Component)
 
 local BallService = Knit.CreateService {
     Name = "BallService",
@@ -17,7 +16,6 @@ local BallService = Knit.CreateService {
 BallService.BallComponents = {}
 
 function BallService.Client:Throw(plr, lookVector)
-    
     local function GetBall()
         if plr.Character then
             local leftHand = plr.Character:FindFirstChild("LeftHand")
@@ -39,14 +37,17 @@ function BallService.Client:Throw(plr, lookVector)
 
     local ball = GetBall()
     if ball then
-        local ballComponent = BallService.BallComponents[ball]
+        local ballComponent = Ball.FromInstance(ball, Ball)
         ballComponent:Throw(lookVector)
     end
 end
 
 function BallService:ResetBalls()
-    for ball, component in pairs(BallService.BallComponents) do
-        component:Destroy()
+    for ball, _ in pairs(BallService.BallComponents) do
+        local componentInstance = Component.FromInstance(ball, Ball)
+        if componentInstance then
+            componentInstance:Destroy()
+        end
     end
     BallService.BallComponents = {}
 end

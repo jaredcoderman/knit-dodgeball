@@ -16,9 +16,9 @@ end
 
 function GameController:KnitStart()
     self.GameService = Knit.GetService("GameService")
-    self.GameService.GameOver:Connect(function(winner)
-        self:DisplayWinner(winner)
-    end)
+    -- self.GameService.GameOver:Connect(function(winner)
+    --     self:DisplayWinner(winner)
+    -- end)
 end
 
 return GameController

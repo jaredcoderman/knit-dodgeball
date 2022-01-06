@@ -10,8 +10,6 @@ local GameService = Knit.CreateService {
     BallThrowers = {},
 }
 
-GameService.GameOver = Signal.new()
-
 function GameService:CheckGameStatus()
     local redTeamOut = 0
     local blueTeamOut = 0
@@ -37,6 +35,10 @@ function GameService:StartGame()
     MapService.TeleportPlayersIn()
     MapService:SpawnBalls()
     MapService.SetCollisionGroups()
+end
+
+function GameService:KnitInit()
+    GameService.GameOver = Signal.new()
 end
 
 function GameService:KnitStart()
