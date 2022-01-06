@@ -9,11 +9,12 @@ local LobbyConfig = require(script.Parent.LobbyConfig)
 
 local LobbyService = Knit.CreateService {
     Name = "LobbyService",
-    Client = {},
+    Client = {
+        UpdateCountdown = Knit.CreateSignal()
+    },
     _WaitingPlayers = {},
+    TeleportWaitOver = Signal.new()
 }
-
-LobbyService.Client.UpdateCountdown = Knit.CreateSignal()
 
 function LobbyService:AssignPlayers()
     local TeamService = Knit.GetService("TeamService")
@@ -73,6 +74,7 @@ function LobbyService:Countdown()
     LobbyService.TeamService = Knit.GetService("TeamService")
     local teleportWaitTime = LobbyService.TeamService.TeamConfig.TELEPORT_WAIT_TIME
     task.wait(teleportWaitTime)
+    self.TeleportWaitOver:Fire()
     for i = LobbyConfig.TIMER, 0, -1 do
         LobbyService.Client.UpdateCountdown:FireAll(i)
         task.wait(1)

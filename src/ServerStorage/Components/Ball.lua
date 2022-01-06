@@ -32,7 +32,7 @@ local function GetHumanoid(player: Player)
 end
 
 local Ball = Component.new({
-    Tag = "Ball"
+    Tag = "Ball",
 })
 
 function Ball:Construct()
@@ -271,6 +271,7 @@ function Ball:Start()
 end
 
 function Ball:Stop()
+    print("Stopped")
     self._trove:Destroy()
 end
 

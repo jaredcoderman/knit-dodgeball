@@ -1,4 +1,4 @@
 return {
-    TIMER = 5,
+    TIMER = 3,
     REQUIRED_PLAYERS = 2
 }
