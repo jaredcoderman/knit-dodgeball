@@ -1,9 +1,11 @@
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
-local Maid = require(ReplicatedStorage.Packages.Maid)
+local Trove = require(ReplicatedStorage.Packages.Trove)
 local Option = require(ReplicatedStorage.Packages.Option)
+local Component = require(ReplicatedStorage.Packages.Component)
 
 local Ball = {}
 Ball.__index = Ball
@@ -29,14 +31,13 @@ local function GetHumanoid(player: Player)
     return Option.None
 end
 
-function Ball.new(instance)
-    local self = setmetatable({}, Ball)
-    self.Instance = instance
-    self._maid = Maid.new()
-    self._maid:GiveTask(self.Instance)
+local Ball = Component.new({
+    Tag = "Ball"
+})
 
+function Ball:Construct()
+    self._trove = Trove.new()
     self.TeamService = Knit.GetService("TeamService")
-    return self
 end
 
 function Ball:_setFlying(bool)
@@ -116,7 +117,7 @@ function Ball:_prepareThrow(plr)
                 local teamName = self.TeamService:FindTeam(plr).name
                 self:_setTeam(teamName)
                 self.Instance.CanCollide = true
-                self._playerMaid:DoCleaning()
+                self._playerTrove:Clean()
             end
         end;
         None = function() end
@@ -142,9 +143,9 @@ end
 
 function Ball:_listenForTouches()
 
-    local playerMaid = Maid.new()
-    self._maid:GiveTask(playerMaid)
-    self._playerMaid = playerMaid
+    local playerTrove = Trove.new()
+    self._trove:Add(playerTrove)
+    self._playerTrove = playerTrove
 
     local function GetOpenHand(player: Player)
         if(player.Character) then
@@ -180,15 +181,15 @@ function Ball:_listenForTouches()
         
         self.Instance.Parent = hand
 
-        playerMaid:GiveTask(function()
+        playerTrove:Add(function()
             self.Instance.CanCollide = true
             if self.Instance.Parent then
                 self.Instance.Parent = workspace
             end
         end)
-        playerMaid:GiveTask(attachment)
-        playerMaid:GiveTask(alignPos)
-        playerMaid:GiveTask(alignOrientation)
+        playerTrove:Add(attachment)
+        playerTrove:Add(alignPos)
+        playerTrove:Add(alignOrientation)
         self.Instance:SetNetworkOwner(player)
         local readyCoro = coroutine.create(function()
             task.wait(.5)
@@ -198,18 +199,18 @@ function Ball:_listenForTouches()
     end
 
     local function DetachFromPlayer()
-        playerMaid:DoCleaning()
+        playerTrove:Clean()
     end
 
     local function AttachToPlayer(player: Player, humanoid: any)
         self.Instance:SetAttribute("PlayerId", player.UserId)
         self._ready = false
 
-        playerMaid:GiveTask(humanoid.Died:Connect(DetachFromPlayer))
-        playerMaid:GiveTask(function()
+        playerTrove:Add(humanoid.Died:Connect(DetachFromPlayer))
+        playerTrove:Add(function()
             self.Instance:SetAttribute("PlayerId", 0)
         end)
-        playerMaid:GiveTask(Players.PlayerRemoving:Connect(function(plr: Player)
+        playerTrove:Add(Players.PlayerRemoving:Connect(function(plr: Player)
                 if plr == player then
                     DetachFromPlayer()
                 end
@@ -231,7 +232,7 @@ function Ball:_listenForTouches()
         return false
     end
 
-    self._maid:GiveTask(self.Instance.Touched:Connect(function(hit)
+    self._trove:Add(self.Instance.Touched:Connect(function(hit)
         if self.Instance:GetAttribute("PlayerId") ~= 0 then return end
         if self.Instance:GetAttribute("Flying") == true then return end
         if self.Instance:GetAttribute("Team") ~= "" then return end
@@ -263,14 +264,14 @@ function Ball:Throw(lookVector)
     end
 end
 
-function Ball:Init()
+function Ball:Start()
     self.Instance.Color = BallColors[math.random(1, #BallColors)]
     self:_setTeam("")
     self:_listenForTouches()
 end
 
-function Ball:Destroy()
-    self._maid:Destroy()
+function Ball:Stop()
+    self._trove:Destroy()
 end
 
 return Ball 

@@ -64,7 +64,10 @@ function TeamService:CheckTeamCapacity(team: table)
         if otherLen == TeamService.TeamConfig.TEAM_SIZE then
             TeamService.TeamsFull:Fire()
         end
-        -- TeamService.TeamsFull:Fire()
+        if TeamService.TeamConfig.SOLO_TESTING then
+            TeamService.TeamsFull:Fire()
+        end
+
     end
 end
 

@@ -2,14 +2,18 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
+local Signal = require(ReplicatedStorage.Packages.Signal)
+
 local LobbyConfig = require(script.Parent.LobbyConfig)
-local Option = require(ReplicatedStorage.Packages.Option)
+
 
 local LobbyService = Knit.CreateService {
     Name = "LobbyService",
     Client = {},
     _WaitingPlayers = {},
 }
+
+LobbyService.Client.UpdateCountdown = Knit.CreateSignal()
 
 function LobbyService:AssignPlayers()
     local TeamService = Knit.GetService("TeamService")
@@ -40,6 +44,7 @@ end
 function LobbyService:CheckReadiness()
     local len: number = #self._WaitingPlayers
     if len >= LobbyConfig.REQUIRED_PLAYERS then
+        self:Countdown()
         self:AssignPlayers()
     end
 end
@@ -64,13 +69,20 @@ function LobbyService:ReassignPlayers()
     self:CheckReadiness()
 end
 
+function LobbyService:Countdown()
+    LobbyService.TeamService = Knit.GetService("TeamService")
+    local teleportWaitTime = LobbyService.TeamService.TeamConfig.TELEPORT_WAIT_TIME
+    task.wait(teleportWaitTime)
+    for i = LobbyConfig.TIMER, 0, -1 do
+        LobbyService.Client.UpdateCountdown:FireAll(i)
+        task.wait(1)
+    end
+end
+
 function LobbyService:KnitStart()
     LobbyService.GameService = Knit.GetService("GameService")
-    LobbyService.TeamService = Knit.GetService("TeamService")
-
+    
     LobbyService.GameService.GameOver:Connect(function(winner)
-        local teleportWaitTime = LobbyService.TeamService.TeamConfig.TELEPORT_WAIT_TIME
-        task.wait(LobbyConfig.TIMER + teleportWaitTime)
         self:ReassignPlayers()
     end)
 end

@@ -6,13 +6,10 @@ local plr = Players.LocalPlayer
 local mouse = plr:GetMouse()
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
-local Signal = require(ReplicatedStorage.Packages.Signal)
 
 local BallController = Knit.CreateController {
     Name = "BallController",
 }
-
-BallController.BallComponents = {}
 
 function BallController:KnitStart()
     local BallService = Knit.GetService("BallService")

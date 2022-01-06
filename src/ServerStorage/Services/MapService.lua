@@ -40,7 +40,7 @@ function MapService:TeleportPlayersIn()
         local currentPlayer = teamBlue[i]
         if currentPlayer then
             local hrp = currentPlayer.Character.HumanoidRootPart
-            hrp.CFrame = point.CFrame
+            hrp.CFrame = CFrame.new(point.Position + Vector3.new(0, 2, 0))
             GetHumanoid(currentPlayer):Match {
                 Some = function(humanoid)
                     humanoid.WalkSpeed = 25
@@ -55,7 +55,7 @@ function MapService:TeleportPlayersIn()
         local currentPlayer = teamRed[i]
         if currentPlayer then
             local hrp = currentPlayer.Character.HumanoidRootPart
-            hrp.CFrame = point.CFrame
+            hrp.CFrame = CFrame.new(point.Position + Vector3.new(0, 2, 0))
             GetHumanoid(currentPlayer):Match {
                 Some = function(humanoid)
                     humanoid.WalkSpeed = 25
@@ -67,7 +67,6 @@ function MapService:TeleportPlayersIn()
 end
 
 function MapService:TeleportPlayersOut(players)
-
     local function GetHumanoidRootPart(player)
         if player.Character then
             local hrp = player.Character:FindFirstChild("HumanoidRootPart")
@@ -81,7 +80,7 @@ function MapService:TeleportPlayersOut(players)
             Some = function(hrp)
                 local spawnLocation = workspace.SpawnLocation
                 local offset = Vector3.new(0, 4, 0)
-                hrp.Position = spawnLocation.Position + offset
+                hrp.CFrame = CFrame.new(spawnLocation.Position + offset)
             end;
             None = function() end
         }
@@ -95,9 +94,8 @@ function MapService:SpawnBalls()
         local newBall = Ball:Clone()
         newBall.Position = point.Position + Vector3.new(0, .5, 0)
         newBall.Parent = point
-
-        local newBallComponent = BallComponent.new(newBall)
-        newBallComponent:Init()
+        
+        local newBallComponent = BallComponent:Construct()
         BallService.BallComponents[newBall] = newBallComponent
     end
 end
