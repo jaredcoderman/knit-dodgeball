@@ -59,13 +59,11 @@ function BallThrower:Throw(plr, lookVector, hand)
                     elseif team.name == "Blue" then
                         PhysicsService:CollisionGroupSetCollidable(plr.Name, "BlueTeam", false)
                     end
-                    local groupName = self.Instance.Name
-                    task.wait(.5)
+                    local groupName = plr.Name
+                    task.wait(1)
                     PhysicsService:RemoveCollisionGroup(groupName)
                 end
             end
-            local physicsCoro = coroutine.create(SetBallPhysics)
-            coroutine.resume(physicsCoro)
             local ballComponent
             if hand.Name == "RightHand" then
                 ballComponent = self._ballComponents.Right
@@ -73,12 +71,15 @@ function BallThrower:Throw(plr, lookVector, hand)
                 ballComponent = self._ballComponents.Left
             end
             if ballComponent then
+                local physicsCoro = coroutine.create(SetBallPhysics)
+                coroutine.resume(physicsCoro)
+                task.wait()
                 ballComponent:SetLastThrower(plr.UserId)
                 ballComponent:SetTeam(Knit.GetService("TeamService"):FindTeam(plr).name)
 
                 local bodyVelocity = Instance.new("BodyVelocity")
                 bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
-                bodyVelocity.Velocity = (lookVector * 150) + Vector3.new(0, 15, 0)
+                bodyVelocity.Velocity = (lookVector * 150) + Vector3.new(0, 10, 0)
                 ball.RigidConstraint.Attachment0 = nil
                 bodyVelocity.Parent = ball
 

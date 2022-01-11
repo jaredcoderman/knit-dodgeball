@@ -136,11 +136,13 @@ function Ball:_listenForTouches()
                 DebounceThrowOnPickup(player, hand)
             end)
             coroutine.resume(debounceCoro)
-            -- playerTrove:Add(function()
-            --     self.Instance.Parent = workspace
-            --     self.Instance.RigidConstraint.Attachment0 = nil
-            --     self._playerId = 0
-            -- end)
+            playerTrove:Add(function()
+                if self.Instance.Parent then
+                    self.Instance.Parent = workspace
+                    self.Instance.RigidConstraint.Attachment0 = nil
+                end
+                self:SetPlayer(0)
+            end)
             playerTrove:Add(humanoid.Died:Connect(DetachFromPlayer))
             playerTrove:Add(Players.PlayerRemoving:Connect(function(playerThatLeft)
                 if playerThatLeft == player then
