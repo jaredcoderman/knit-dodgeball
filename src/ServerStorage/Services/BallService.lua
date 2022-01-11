@@ -16,35 +16,6 @@ local BallService = Knit.CreateService {
     Client = {},
 }
 
-function BallService.Client:Throw(plr, lookVector)
-    local function GetBall()
-        if plr.Character then
-            local leftHand = plr.Character:FindFirstChild("LeftHand")
-            if leftHand then
-                local ball = leftHand:FindFirstChild("Ball")
-                if ball then
-                    return Option.Wrap(ball)
-                end
-            end
-            local rightHand = plr.Character:FindFirstChild("RightHand")
-            if rightHand then
-                local ball = rightHand:FindFirstChild("Ball")
-                if ball then
-                    return Option.Wrap(ball)
-                end
-            end
-        end
-        return Option.None
-    end
-    GetBall():Match {
-        Some = function(ball)
-            local ballComponent = Ball.FromInstance(ball, Ball)
-            ballComponent:Throw(lookVector)
-        end;
-        None = function() end
-    }
-end
-
 function BallService:ResetBalls()
     local ballComponents = Ball:GetAll()
     for i = 1, #ballComponents do

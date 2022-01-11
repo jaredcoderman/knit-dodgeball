@@ -1,9 +1,12 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Teams = game:GetService("Teams")
+local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Signal = require(ReplicatedStorage.Packages.Signal)
+local Option = require(ReplicatedStorage.Packages.Option)
+local Trove = require(ReplicatedStorage.Packages.Trove)
 
 local function _getLengthOfKeyValueTable(t: table)
     local count = 0
@@ -35,21 +38,12 @@ local TeamService = Knit.CreateService {
     _TeamBlue = {
         name = "Blue"
     },
+    _trove = Trove.new()
 }
 
 TeamService.TeamsFull = Signal.new()
 TeamService.PlayerGotOut = Signal.new()
 TeamService.TeamConfig = require(script.Parent.TeamConfig)
-
-function TeamService:Reset()
-    self._PlayersOut = {}
-    self._TeamRed = {
-        name = "Red"
-    }
-    self._TeamBlue = {
-        name = "Blue"
-    }
-end
 
 function TeamService:CheckTeamCapacity(team: table)
     local len = _getLengthOfKeyValueTable(team)
@@ -72,7 +66,6 @@ function TeamService:CheckTeamCapacity(team: table)
 end
 
 function TeamService:JoinTeam(player: Player, team: string)
-    local teamTable: table?
     if table.find(self._TeamRed, player) or table.find(self._TeamBlue, player) then return end
     if team == "Red" then 
         table.insert(self._TeamRed, player)
@@ -84,6 +77,22 @@ function TeamService:JoinTeam(player: Player, team: string)
 end
 
 function TeamService:AddPlayer(player: Player)
+    local function GetHumanoid()
+        if player.Character then
+            local hum = player.Character:FindFirstChild("Humanoid")
+            return Option.Wrap(hum)
+        end
+        Option.None()
+    end
+
+    GetHumanoid():Match {
+        Some = function(humanoid)
+            self._trove:Add(humanoid.Died:Connect(function()
+                self:GetPlayerOut(player)
+            end))
+        end;
+        None = function() end
+    }
     table.insert(self._PlayersInGame, player)
 end
 
@@ -109,7 +118,6 @@ end
 function TeamService:FindTeam(player: Player)
     if table.find(self._TeamRed, player) then return self._TeamRed end
     if table.find(self._TeamBlue, player) then return  self._TeamBlue end
-    return nil
 end
 
 function TeamService:RemovePlayer(player: Player)
@@ -129,15 +137,26 @@ function TeamService:KnitInit()
     end)
 end
 
+function TeamService:Reset()
+    self._PlayersOut = {}
+    self._TeamRed = {
+        name = "Red"
+    }
+    self._TeamBlue = {
+        name = "Blue"
+    }
+    self._PlayersInGame = {}
+    self._trove:Clean()
+end
+
 function TeamService:KnitStart()
     TeamService.GameService = Knit.GetService("GameService")
     TeamService.MapService = Knit.GetService("MapService")
 
     TeamService.GameService.GameOver:Connect(function(winner)
-        self:Reset()
         task.wait(TeamService.TeamConfig.TELEPORT_WAIT_TIME)
         TeamService.MapService:TeleportPlayersOut(self._PlayersInGame)
-        self._PlayersInGame = {}
+        self:Reset()
     end)
 end
 

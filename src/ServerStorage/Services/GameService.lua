@@ -15,17 +15,18 @@ function GameService:CheckGameStatus()
     local blueTeamOut = 0
     local teamSize = self.TeamService.TeamConfig.TEAM_SIZE
     for _,player in ipairs(self.TeamService._PlayersOut) do
+        print(player.Name)
         local playerTeam = self.TeamService:FindTeam(player).name
         if playerTeam == "Red" then
             redTeamOut += 1
-        else 
+        else
             blueTeamOut += 1
         end
     end
     if redTeamOut == teamSize then
-        GameService.GameOver:Fire("Blue")
+        -- GameService.GameOver:Fire("Blue")
     elseif blueTeamOut == teamSize then
-        GameService.GameOver:Fire("Red")
+        -- GameService.GameOver:Fire("Red")
     end
 end
 

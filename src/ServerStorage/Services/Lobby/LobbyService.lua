@@ -45,7 +45,7 @@ end
 function LobbyService:CheckReadiness()
     local len: number = #self._WaitingPlayers
     if len >= LobbyConfig.REQUIRED_PLAYERS then
-        self:Countdown()
+        -- self:Countdown()
         self:AssignPlayers()
     end
 end

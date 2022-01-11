@@ -1,4 +1,4 @@
 return {
-    VELOCITY = 100,
-    HEIGHT = 25
+    VELOCITY = 150,
+    HEIGHT = 15
 }

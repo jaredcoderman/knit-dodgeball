@@ -7,7 +7,6 @@ local CollectionService = game:GetService("CollectionService")
 local Ball = ReplicatedStorage.Assets.Ball
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
-local BallComponent = require(ServerStorage.Source.Components.Ball)
 local Option = require(ReplicatedStorage.Packages.Option)
 
 local MapService = Knit.CreateService {
@@ -32,6 +31,7 @@ function MapService:TeleportPlayersIn()
         if player.Character then
             local humanoid = player.Character:FindFirstChildWhichIsA("Humanoid")
             return Option.Wrap(humanoid)
+
         end
         return Option.None
     end
