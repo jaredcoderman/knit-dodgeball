@@ -7,7 +7,6 @@ local CollectionService = game:GetService("CollectionService")
 local Ball = ReplicatedStorage.Assets.Ball
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
-local BallComponent = require(ServerStorage.Source.Components.Ball)
 local Option = require(ReplicatedStorage.Packages.Option)
 
 local MapService = Knit.CreateService {

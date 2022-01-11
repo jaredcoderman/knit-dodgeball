@@ -1,9 +1,12 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Teams = game:GetService("Teams")
+local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Signal = require(ReplicatedStorage.Packages.Signal)
+local Option = require(ReplicatedStorage.Packages.Option)
+local Trove = require(ReplicatedStorage.Packages.Trove)
 
 local function _getLengthOfKeyValueTable(t: table)
     local count = 0
@@ -84,6 +87,22 @@ function TeamService:JoinTeam(player: Player, team: string)
 end
 
 function TeamService:AddPlayer(player: Player)
+    local function GetHumanoid()
+        if player.Character then
+            local hum = player.Character:FindFirstChild("Humanoid")
+            return Option.Wrap(hum)
+        end
+        Option.None()
+    end
+
+    GetHumanoid():Match {
+        Some = function(humanoid)
+            humanoid.Died:Connect(function()
+                self:GetPlayerOut(player)
+            end)
+        end;
+        None = function() end
+    }
     table.insert(self._PlayersInGame, player)
 end
 

@@ -23,9 +23,9 @@ function GameService:CheckGameStatus()
         end
     end
     if redTeamOut == teamSize then
-        GameService.GameOver:Fire("Blue")
+        -- GameService.GameOver:Fire("Blue")
     elseif blueTeamOut == teamSize then
-        GameService.GameOver:Fire("Red")
+        -- GameService.GameOver:Fire("Red")
     end
 end
 

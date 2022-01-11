@@ -1,12 +1,16 @@
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local CollectionService = game:GetService("CollectionService")
+local PhysicsService = game:GetService("PhysicsService")
 
-local Knit = require(ReplicatedStorage.Packages.Knit)
-local Trove = require(ReplicatedStorage.Packages.Trove)
-local Option = require(ReplicatedStorage.Packages.Option)
-local Component = require(ReplicatedStorage.Packages.Component)
+local Packages = ReplicatedStorage.Packages
+local Knit = require(Packages.Knit)
+local Trove = require(Packages.Trove)
+local Option = require(Packages.Option)
+local Component = require(Packages.Component)
+local Signal = require(Packages.Signal)
 
+local BallThrower = require(script.Parent.BallThrower)
 local BallConfig = require(script.Parent.BallConfig)
 
 local BallColors = {
@@ -16,8 +20,8 @@ local BallColors = {
     Color3.fromRGB(0, 0, 255)
 }
 
-local function GetPlayerFromPart(hit)
-    return Option.Wrap(Players:GetPlayerFromCharacter(hit.Parent))
+local function GetPlayerFromPart(part)
+    return Option.Wrap(Players:GetPlayerFromCharacter(part.Parent))
 end
 
 local function GetHumanoid(player: Player)
@@ -34,236 +38,156 @@ local Ball = Component.new({
 
 function Ball:Construct()
     self._trove = Trove.new()
-    self.TeamService = Knit.GetService("TeamService")
 end
 
-function Ball:_setFlying(bool)
-    self.Instance:SetAttribute("Flying", bool)
-end
-
-function Ball:_setTeam(team: string)
-    self.Instance:SetAttribute("Team", team)
-end
-
-function Ball:_getPlayerOut(player: Player)
-    local TeamService = Knit.GetService("TeamService")
-    GetHumanoid(player):Match {
-        Some = function(humanoid)
-            TeamService:GetPlayerOut(player)
-        end;
-        None = function() end
-    }
-end
-
-function Ball:_listenForEnemyHit()
-    self._hitConnection = self.Instance.Touched:Connect(function(hit)
-        if hit.Name == "Floor"then
-            self._hitConnection:Disconnect()
-            self:_setFlying(false)
-            self:_setTeam("")
-        else 
-            GetPlayerFromPart(hit):Match {
-                Some = function(player)
-                    local playerTeam = self.TeamService:FindTeam(player).name
-                    local ballTeam = self.Instance:GetAttribute("Team")
-                    if ballTeam ~= "" and ballTeam ~= playerTeam then
-                        self:_getPlayerOut(player)
-                        player.Character.Humanoid.Health = 0
-                        self:_setFlying(false)
-                        self:_setTeam("")
-                        self._hitConnection:Disconnect()
-                    end
-                end;
-                None = function() end
-            }
-        end
-    end)
-end
-
-function Ball:_getThrowAnimation(plr)
-
-    if plr.Character then
-        local leftHand = plr.Character:FindFirstChild("LeftHand")
-        if leftHand then
-            if leftHand:FindFirstChild("Ball") then
-                return self.Instance.Left
-            end
-        end
-
-        local rightHand = plr.Character:FindFirstChild("RightHand")
-        if rightHand then
-            if rightHand:FindFirstChild("Ball") then
-                return self.Instance.Right
-            end
-        end
-        return self.Instance.Right
+function Ball:ListenForHits()
+    local plr = Players:GetPlayerByUserId(self.Instance:GetAttribute("PlayerId"))
+    local function ResetBallComponent()
+        self:SetPlayer(0)
+        self:SetTeam("")
+        local debounce = coroutine.create(function()
+            task.wait(.5)
+            self:SetLastThrower(0)
+        end)
+        coroutine.resume(debounce)
     end
-
-end
-
-function Ball:_prepareThrow(plr)
-    GetHumanoid(plr):Match {
-        Some = function(humanoid)
-            if self.Instance:GetAttribute("Flying") == false then
-                self:_setFlying(true)
-                local animation = self:_getThrowAnimation(plr)
-                local track = humanoid:LoadAnimation(animation)
-                track.Priority = Enum.AnimationPriority.Action
-                track:Play()
-                task.wait(.25)
-                local teamName = self.TeamService:FindTeam(plr).name
-                self:_setTeam(teamName)
-                self.Instance.CanCollide = true
-                self._playerTrove:Clean()
+    if plr then
+        local function GetPlayerFromPart(part)
+            return Option.Wrap(Players:GetPlayerFromCharacter(part.Parent))
+        end
+        local hitConnection
+        hitConnection = self.Instance.Touched:Connect(function(part)
+            if part.Name == "Floor" then
+                print("Resetting from floor")
+                ResetBallComponent()
+                hitConnection:Disconnect()
+            else
+                GetPlayerFromPart(part):Match {
+                    Some = function(player)
+                        local playerTeam = Knit.GetService("TeamService"):FindTeam(player).name
+                        if self.Instance:GetAttribute("Team") ~= playerTeam  then
+                            print("Resetting from player hit ")
+                            ResetBallComponent()
+                            hitConnection:Disconnect()
+                        end
+                    end;
+                    None = function() print(part) end
+                }
             end
-        end;
-        None = function() end
-    }
+        end)
+    end
 end
-
-function Ball:_fire(lookVector)
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
-    bodyVelocity.Velocity = (lookVector * BallConfig.VELOCITY) + Vector3.new(0, BallConfig.HEIGHT, 0)
-    bodyVelocity.Parent = self.Instance
-    self.Instance.Anchored = false
-    self.Instance:SetNetworkOwner()
-    self:_listenForEnemyHit()
-    task.wait(.25)
-    bodyVelocity:Destroy()
-end
-
-function Ball:_resetOwner()
-    self.Instance:SetAttribute("PlayerId", 0)
-    self.Instance.Parent = workspace
-end
-
 
 function Ball:_listenForTouches()
-    local playerTrove = Trove.new()
-    self._trove:Add(playerTrove)
-    self._playerTrove = playerTrove
 
-    local function GetOpenHand(player: Player)
-        if(player.Character) then
-            local rightHand = player.Character:FindFirstChild("RightHand")
-            local leftHand = player.Character:FindFirstChild("LeftHand")
+    local playerTrove = Trove.new()
+    local function DetachFromPlayer()
+        playerTrove:Clean()
+    end
+    local function GetHand(player: Player)
+        local char = player.Character 
+        if char then
+            local rightHand = char:FindFirstChild("RightHand")
+            local leftHand = char:FindFirstChild("LeftHand")
             if not rightHand:FindFirstChild("Ball") then
                 return Option.Wrap(rightHand)
             elseif not leftHand:FindFirstChild("Ball") then
                 return Option.Wrap(leftHand)
             end
-            return Option.None
+        end
+        return Option.None
+    end
+    local function DebounceThrowOnPickup(player: Player, hand)
+        if player.Character then
+            local ballThrower = Component.FromInstance(player.Character, BallThrower)
+            if hand.Name == "RightHand" then
+                ballThrower._ballComponents.Right = self
+            else
+                ballThrower._ballComponents.Left = self
+            end
+            task.wait(.25)
+            ballThrower._hasBall:Set(true)
         end
     end
-
-    local function CreateAttachment(hand, player)
-        self.Instance.CanCollide = false
-        self.Instance.Anchored = false 
-        local attachment = Instance.new("Attachment")
-        attachment.Position = Vector3.new(0, 0, -1.5)
-        attachment.Parent = hand
-
-        local alignPos = Instance.new("AlignPosition")
-        alignPos.RigidityEnabled = true 
-        alignPos.Attachment0 = self.Instance.Attachment
-        alignPos.Attachment1 = attachment
-        alignPos.Parent = self.Instance
-
-        local alignOrientation = Instance.new("AlignOrientation")
-        alignOrientation.RigidityEnabled = true
-        alignOrientation.Attachment0 = self.Instance.Attachment
-        alignOrientation.Attachment1 = attachment
-        alignOrientation.Parent = self.Instance
-        
-        self.Instance.Parent = hand
-
-        playerTrove:Add(function()
-            self.Instance.CanCollide = true
-        end)
-        playerTrove:Add(attachment)
-        playerTrove:Add(alignPos)
-        playerTrove:Add(alignOrientation)
-        self.Instance:SetNetworkOwner(player)
-        local readyCoro = coroutine.create(function()
-            task.wait(.5)
-            self._ready = true
-        end)
-        coroutine.resume(readyCoro)
+    local function GetGrip(hand: Part)
+        if hand.Name == "RightHand" then
+            return hand.RightGripAttachment
+        else 
+            return hand.LeftGripAttachment
+        end
     end
-
-    local function DetachFromPlayer()
-        self.Instance.Parent = workspace
-        playerTrove:Clean()
-    end
-
-    local function AttachToPlayer(player: Player, humanoid: any)
-        self.Instance:SetAttribute("PlayerId", player.UserId)
-        self._ready = false
-
-        playerTrove:Add(humanoid.Died:Connect(DetachFromPlayer))
-        playerTrove:Add(function()
-            self.Instance:SetAttribute("PlayerId", 0)
-        end)
-        playerTrove:Add(Players.PlayerRemoving:Connect(function(plr: Player)
-                if plr == player then
+    local function AttachToPlayerHand(player: Player, hand: Part, humanoid: Humanoid)
+        print("Picking up")
+        local grip = GetGrip(hand)
+        if grip then
+            self.Instance:SetAttribute("PlayerId", player.UserId)
+            self.Instance.Anchored = false
+            self.Instance.RigidConstraint.Attachment0 = grip 
+            self.Instance.Parent = hand
+            CollectionService:AddTag(player.Character, "BallThrower")
+            local debounceCoro = coroutine.create(function()
+                DebounceThrowOnPickup(player, hand)
+            end)
+            coroutine.resume(debounceCoro)
+            playerTrove:Add(function()
+                self.Instance.Parent = workspace
+                self.Instance.RigidConstraint.Attachment0 = nil
+                self._playerId = 0
+            end)
+            playerTrove:Add(humanoid.Died:Connect(DetachFromPlayer))
+            playerTrove:Add(Players.PlayerRemoving:Connect(function(playerThatLeft)
+                if playerThatLeft == player then
                     DetachFromPlayer()
                 end
-        end))
-        GetOpenHand(player):Match {
-            Some = function(hand)
-                CreateAttachment(hand, player)
-            end;
-            None = function() end
-        }
-    end
-
-    local function HandsFull(player: Player)
-        if player.Character then
-            if player.Character.RightHand:FindFirstChild("Ball") and player.Character.LeftHand:FindFirstChild("Ball") then
-                return true
-            end
+            end))
         end
-        return false
     end
 
-    self._trove:Add(self.Instance.Touched:Connect(function(hit)
-        if self.Instance:GetAttribute("PlayerId") ~= 0 then return end
-        if self.Instance:GetAttribute("Flying") == true then return end
-        if self.Instance:GetAttribute("Team") ~= "" then return end
-        GetPlayerFromPart(hit):Match {
+    self._trove:Add(self.Instance.Touched:Connect(function(part)
+        GetPlayerFromPart(part):Match {
             Some = function(player: Player)
-                if self.Instance:GetAttribute("PlayerId") ~= player.UserId and not HandsFull(player) then
-                    GetHumanoid(player):Match {
-                        Some = function(humanoid)
-                            if humanoid.Health > 0 then
-                                AttachToPlayer(player, humanoid)
-                            end
-                        end;
-                        None = function() end
-                    }
-                end
-            end;
+                if self.Instance:GetAttribute("PlayerId") ~= 0 then return end
+                if self.Instance:GetAttribute("Team") ~= "" then return end
+                if self.Instance:GetAttribute("LastThrower") == player.UserId then return end
+                GetHumanoid(player):Match {
+                    Some = function(humanoid)
+                        if humanoid.Health > 0 then
+                            GetHand(player):Match {
+                                Some = function(hand)
+                                    AttachToPlayerHand(player, hand, humanoid)
+                                end;
+                                None = function() end
+                            }
+                        end
+                    end;
+                    None = function() end
+                }
+            end,
             None = function() end
         }
     end))
 end
 
-function Ball:Throw(lookVector)
-    local plr = Players:GetPlayerByUserId(self.Instance:GetAttribute("PlayerId"))
-    if plr then
-        if plr.Character and self._ready then
-            self._ready = false
-            self:_prepareThrow(plr)
-            self:_fire(lookVector)
-            self:_resetOwner()
-        end
-    end
+function Ball:SetTeam(team: string)
+    self.Instance:SetAttribute("Team", team)
+end
+
+function Ball:SetLastThrower(id: number)
+    self.Instance:SetAttribute("LastThrower", id)
+end
+
+function Ball:SetPlayer(id: number)
+    self.Instance:SetAttribute("PlayerId", id)
 end
 
 function Ball:Start()
+    print("Started")
     self.Instance.Color = BallColors[math.random(1, #BallColors)]
-    self:_setTeam("")
+    self._trove:AttachToInstance(self.Instance)
+    self._trove:Add(function()
+        self._playerId = 0
+    end)
+
     self:_listenForTouches()
 end
 
@@ -272,4 +196,4 @@ function Ball:Stop()
     self._trove:Destroy()
 end
 
-return Ball 
+return Ball
