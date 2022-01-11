@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
+local TeleportService = game:GetService("TeleportService")
 local PhysicsService = game:GetService("PhysicsService")
 
 local Packages = ReplicatedStorage.Packages
@@ -40,6 +41,15 @@ function Ball:Construct()
     self._trove = Trove.new()
 end
 
+function Ball:_registerHit(player: Player)
+    GetHumanoid(player):Match {
+        Some = function(humanoid)
+            humanoid.Health = 0
+        end;
+        None = function() end
+    }
+end
+
 function Ball:ListenForHits()
     local plr = Players:GetPlayerByUserId(self.Instance:GetAttribute("PlayerId"))
     local function ResetBallComponent()
@@ -58,7 +68,6 @@ function Ball:ListenForHits()
         local hitConnection
         hitConnection = self.Instance.Touched:Connect(function(part)
             if part.Name == "Floor" then
-                print("Resetting from floor")
                 ResetBallComponent()
                 hitConnection:Disconnect()
             else
@@ -66,12 +75,12 @@ function Ball:ListenForHits()
                     Some = function(player)
                         local playerTeam = Knit.GetService("TeamService"):FindTeam(player).name
                         if self.Instance:GetAttribute("Team") ~= playerTeam  then
-                            print("Resetting from player hit ")
-                            ResetBallComponent()
                             hitConnection:Disconnect()
+                            self:_registerHit(player)
+                            ResetBallComponent()
                         end
                     end;
-                    None = function() print(part) end
+                    None = function() end
                 }
             end
         end)
@@ -117,23 +126,21 @@ function Ball:_listenForTouches()
         end
     end
     local function AttachToPlayerHand(player: Player, hand: Part, humanoid: Humanoid)
-        print("Picking up")
         local grip = GetGrip(hand)
         if grip then
             self.Instance:SetAttribute("PlayerId", player.UserId)
             self.Instance.Anchored = false
             self.Instance.RigidConstraint.Attachment0 = grip 
             self.Instance.Parent = hand
-            CollectionService:AddTag(player.Character, "BallThrower")
             local debounceCoro = coroutine.create(function()
                 DebounceThrowOnPickup(player, hand)
             end)
             coroutine.resume(debounceCoro)
-            playerTrove:Add(function()
-                self.Instance.Parent = workspace
-                self.Instance.RigidConstraint.Attachment0 = nil
-                self._playerId = 0
-            end)
+            -- playerTrove:Add(function()
+            --     self.Instance.Parent = workspace
+            --     self.Instance.RigidConstraint.Attachment0 = nil
+            --     self._playerId = 0
+            -- end)
             playerTrove:Add(humanoid.Died:Connect(DetachFromPlayer))
             playerTrove:Add(Players.PlayerRemoving:Connect(function(playerThatLeft)
                 if playerThatLeft == player then
@@ -181,7 +188,6 @@ function Ball:SetPlayer(id: number)
 end
 
 function Ball:Start()
-    print("Started")
     self.Instance.Color = BallColors[math.random(1, #BallColors)]
     self._trove:AttachToInstance(self.Instance)
     self._trove:Add(function()
@@ -192,7 +198,6 @@ function Ball:Start()
 end
 
 function Ball:Stop()
-    print("Stopping")
     self._trove:Destroy()
 end
 

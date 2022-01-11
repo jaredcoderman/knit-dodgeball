@@ -36,7 +36,7 @@ function BallThrower:UpdateHasBall()
             self._hasBall:Set(false)
         end
     end
-end 
+end
 
 function BallThrower:Throw(plr, lookVector, hand)
     if not self._hasBall:Get() then return end
@@ -58,8 +58,6 @@ function BallThrower:Throw(plr, lookVector, hand)
                         PhysicsService:CollisionGroupSetCollidable(plr.Name, "RedTeam", false)
                     elseif team.name == "Blue" then
                         PhysicsService:CollisionGroupSetCollidable(plr.Name, "BlueTeam", false)
-                    else 
-                        print("Team not found")
                     end
                     local groupName = self.Instance.Name
                     task.wait(.5)
@@ -74,23 +72,32 @@ function BallThrower:Throw(plr, lookVector, hand)
             else
                 ballComponent = self._ballComponents.Left
             end
-            ballComponent:SetLastThrower(plr.UserId)
-            ballComponent:SetTeam(Knit.GetService("TeamService"):FindTeam(plr).name)
+            if ballComponent then
+                ballComponent:SetLastThrower(plr.UserId)
+                ballComponent:SetTeam(Knit.GetService("TeamService"):FindTeam(plr).name)
 
-            local bodyVelocity = Instance.new("BodyVelocity")
-            bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
-            bodyVelocity.Velocity = (lookVector * 150) + Vector3.new(0, 15, 0)
-            ball.RigidConstraint.Attachment0 = nil
-            bodyVelocity.Parent = ball
+                local bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
+                bodyVelocity.Velocity = (lookVector * 150) + Vector3.new(0, 15, 0)
+                ball.RigidConstraint.Attachment0 = nil
+                bodyVelocity.Parent = ball
 
-            ballComponent:ListenForHits()
-            ball:SetNetworkOwner()
-            ball.Parent = workspace
+                ballComponent:ListenForHits()
+                ball:SetNetworkOwner()
+                ball.Parent = workspace
 
-            self:UpdateHasBall()
-            self._playedAnimation:Set(false)
-            task.wait(.25)
-            bodyVelocity:Destroy()
+                if hand.Name == "RightHand" then
+                    self._ballComponents.Right = ""
+                else 
+                    self._ballComponents.Left = ""
+                end
+                self:UpdateHasBall()
+
+                self._playedAnimation:Set(false)
+                task.wait(.25)
+                bodyVelocity:Destroy()
+
+            end
         end;
         None = function() end
     }
@@ -147,7 +154,6 @@ function BallThrower:Start()
 end
 
 function BallThrower:Stop()
-    print("Ballthrower stopping")
     self._trove:Destroy()
 end
 

@@ -31,6 +31,7 @@ function MapService:TeleportPlayersIn()
         if player.Character then
             local humanoid = player.Character:FindFirstChildWhichIsA("Humanoid")
             return Option.Wrap(humanoid)
+
         end
         return Option.None
     end

@@ -1,6 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
-local PathfindingService = game:GetService("PathfindingService")
 local Players = game:GetService("Players")
 
 local Packages = ReplicatedStorage.Packages
@@ -10,8 +9,17 @@ local Component = require(Packages.Component)
 local Comm = require(Packages.Comm)
 local Option = require(Packages.Option)
 
+local player = Players.LocalPlayer
+
+local OnlyLocalPlayer = {}
+function OnlyLocalPlayer.ShouldConstruct(component)
+    local char = player.CharacterAdded:Wait()
+    return component.Instance == char
+end
+
 local BallThrower = Component.new({
-    Tag = "BallThrower"
+    Tag = "BallThrower",
+    Extensions = { OnlyLocalPlayer }
 })
 
 function BallThrower:Construct()
@@ -53,6 +61,7 @@ function BallThrower:Start()
         if input.UserInputType == Enum.UserInputType.MouseButton1 and hasBall:Get() and not playedAnimation:Get() then
             GetHand():Match {
                 Some = function(hand)
+                    print(hand.Name)
                     self._comm:GetFunction("PlayThrowAnimation")(hand)
                     task.wait(.3)
                     self:_throw(hand)
@@ -64,7 +73,7 @@ function BallThrower:Start()
 end
 
 function BallThrower:Stop()
-    self._trove:Stop()
+    self._trove:Destroy()
 end
 
 return BallThrower
