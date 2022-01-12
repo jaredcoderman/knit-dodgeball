@@ -68,6 +68,8 @@ function BallThrower:Start()
                 end;
                 None = function() end
             }
+        else 
+            print(hasBall:Get(), playedAnimation:Get())
         end
     end))
 end

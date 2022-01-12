@@ -43,10 +43,11 @@ function LobbyService:RemovePlayer(player: Player)
 end
 
 function LobbyService:CheckReadiness()
-    local len: number = #self._WaitingPlayers
-    if len >= LobbyConfig.REQUIRED_PLAYERS then
+    if #self._WaitingPlayers >= LobbyConfig.REQUIRED_PLAYERS then
         self:Countdown()
-        self:AssignPlayers()
+        if #self._WaitingPlayers >= LobbyConfig.REQUIRED_PLAYERS then
+            self:AssignPlayers()
+        end
     end
 end
 

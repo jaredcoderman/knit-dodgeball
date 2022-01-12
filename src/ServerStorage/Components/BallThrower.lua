@@ -45,6 +45,7 @@ function BallThrower:Throw(plr, lookVector, hand)
         if ball then
             return Option.Wrap(ball)
         end
+        return Option.None
     end
     GetBall():Match {
         Some = function(ball)
@@ -80,7 +81,9 @@ function BallThrower:Throw(plr, lookVector, hand)
                 local bodyVelocity = Instance.new("BodyVelocity")
                 bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
                 bodyVelocity.Velocity = (lookVector * 150) + Vector3.new(0, 10, 0)
-                ball.RigidConstraint.Attachment0 = nil
+                if ball:FindFirstChild("RigidConstraint") then
+                    ball.RigidConstraint.Attachment0 = nil
+                end
                 bodyVelocity.Parent = ball
 
                 ballComponent:ListenForHits()
@@ -142,7 +145,7 @@ end
 function BallThrower:PrepareThrow()
     task.wait(.5)
     self._canThrow = true
-    self._canPlayThrowAnimation:Set(true)
+    self._playedAnimation:Set(false)
 end
 
 function BallThrower:Start()
@@ -152,6 +155,12 @@ function BallThrower:Start()
             self._trove:Clean()
         end))
     end
+    
+    local GameService = Knit.GetService("GameService")
+    self._trove:Add(GameService.GameOver:Connect(function()
+        self._playedAnimation:Set(false)
+        self._canThrow = true
+    end))
 end
 
 function BallThrower:Stop()
