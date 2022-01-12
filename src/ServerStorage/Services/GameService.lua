@@ -15,7 +15,6 @@ function GameService:CheckGameStatus()
     local blueTeamOut = 0
     local teamSize = self.TeamService.TeamConfig.TEAM_SIZE
     for _,player in ipairs(self.TeamService._PlayersOut) do
-        print(player.Name)
         local playerTeam = self.TeamService:FindTeam(player).name
         if playerTeam == "Red" then
             redTeamOut += 1

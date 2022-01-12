@@ -45,6 +45,7 @@ function BallThrower:Throw(plr, lookVector, hand)
         if ball then
             return Option.Wrap(ball)
         end
+        return Option.None
     end
     GetBall():Match {
         Some = function(ball)
@@ -142,7 +143,7 @@ end
 function BallThrower:PrepareThrow()
     task.wait(.5)
     self._canThrow = true
-    self._canPlayThrowAnimation:Set(true)
+    self._playedAnimation:Set(false)
 end
 
 function BallThrower:Start()
@@ -152,6 +153,12 @@ function BallThrower:Start()
             self._trove:Clean()
         end))
     end
+    
+    local GameService = Knit.GetService("GameService")
+    self._trove:Add(GameService.GameOver:Connect(function()
+        self._playedAnimation:Set(false)
+        self._canThrow = true
+    end))
 end
 
 function BallThrower:Stop()
