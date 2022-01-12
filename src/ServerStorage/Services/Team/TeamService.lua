@@ -94,6 +94,11 @@ function TeamService:AddPlayer(player: Player)
         None = function() end
     }
     table.insert(self._PlayersInGame, player)
+    self._trove:Add(Players.PlayerRemoving:Connect(function(plr: Player)
+        if plr == player then
+            self:GetPlayerOut(player)
+        end
+    end))
 end
 
 function TeamService:GetPlayerIn(player: Player)
@@ -118,23 +123,6 @@ end
 function TeamService:FindTeam(player: Player)
     if table.find(self._TeamRed, player) then return self._TeamRed end
     if table.find(self._TeamBlue, player) then return  self._TeamBlue end
-end
-
-function TeamService:RemovePlayer(player: Player)
-    _removeValueFromTable(self._PlayersInGame, player)
-    local team = self:FindTeam(player)
-    if table.find(self._PlayersOut, player) then
-        _removeValueFromTable(self._PlayersOut, player)
-    end
-    if team then
-        _removeValueFromTable(team, player)
-    end
-end
-
-function TeamService:KnitInit()
-    Players.PlayerRemoving:Connect(function(player: Player)
-        self:RemovePlayer(player)
-    end)
 end
 
 function TeamService:Reset()
