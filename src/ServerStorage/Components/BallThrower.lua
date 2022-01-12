@@ -81,7 +81,9 @@ function BallThrower:Throw(plr, lookVector, hand)
                 local bodyVelocity = Instance.new("BodyVelocity")
                 bodyVelocity.MaxForce = Vector3.new(50000, 50000, 50000)
                 bodyVelocity.Velocity = (lookVector * 150) + Vector3.new(0, 10, 0)
-                ball.RigidConstraint.Attachment0 = nil
+                if ball:FindFirstChild("RigidConstraint") then
+                    ball.RigidConstraint.Attachment0 = nil
+                end
                 bodyVelocity.Parent = ball
 
                 ballComponent:ListenForHits()

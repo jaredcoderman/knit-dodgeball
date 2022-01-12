@@ -29,19 +29,6 @@ function WinService:GiveWinsToTeam(teamName: string)
 end
 
 function WinService:KnitStart()
-    for _,player in ipairs(Players:GetPlayers()) do
-        local wins = Instance.new("IntValue")
-        wins.Name = "Wins"
-        wins.Value = 0
-        wins.Parent = player:WaitForChild("leaderstats")
-    end
-    Players.PlayerAdded:Connect(function(player)
-        local wins = Instance.new("IntValue")
-        wins.Name = "Wins"
-        wins.Value = 0
-        wins.Parent = player:WaitForChild("leaderstats")
-    end)
-
     self.GameService = Knit.GetService("GameService")
     self.GameService.GameOver:Connect(function(teamName)
         self:GiveWinsToTeam(teamName)
