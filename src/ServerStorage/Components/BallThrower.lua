@@ -148,6 +148,32 @@ function BallThrower:PrepareThrow()
     self._playedAnimation:Set(false)
 end
 
+function BallThrower:TeleportOut()
+    local function GetHumanoidRootPart()
+        local hrp = self.Instance:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            return Option.Wrap(hrp)
+        end
+        return Option.None
+    end
+
+    GetHumanoidRootPart():Match {
+        Some = function(hrp)
+            if self._ballComponents.Right ~= "" then
+                print("Cleaning right hand ball")
+                self._ballComponents.Right._playerTrove:Clean()
+            end
+            if self._ballComponents.Left ~= "" then
+                print("Cleaning left hand ball")
+                self._ballComponents.Left._playerTrove:Clean()
+            end
+            hrp.CFrame = CFrame.new(workspace:WaitForChild("SpawnLocation").Position + Vector3.new(0, 3, 0))
+            hrp.Anchored = true
+        end;
+        None = function() end
+    }
+end
+
 function BallThrower:Start()
     local humanoid = self.Instance:FindFirstChild("Humanoid")
     if humanoid then
@@ -161,6 +187,13 @@ function BallThrower:Start()
         self._playedAnimation:Set(false)
         self._canThrow = true
     end))
+
+    local TeamService = Knit.GetService("TeamService")
+    TeamService.PlayerGotOut:Connect(function(player: Player)
+        if player.Name == self.Instance.Name then
+            self:TeleportOut()
+        end
+    end)
 end
 
 function BallThrower:Stop()

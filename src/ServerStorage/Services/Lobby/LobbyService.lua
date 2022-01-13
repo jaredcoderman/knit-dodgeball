@@ -18,7 +18,6 @@ local LobbyService = Knit.CreateService {
 
 function LobbyService:AssignPlayers()
     local TeamService = Knit.GetService("TeamService")
-    print(#self._WaitingPlayers)
     for i = 1, #self._WaitingPlayers do
         local randomPlayer = self._WaitingPlayers[math.random(1, #self._WaitingPlayers)]
         local position = table.find(self._WaitingPlayers, randomPlayer)
@@ -41,7 +40,7 @@ function LobbyService:RemovePlayer(player: Player)
     local position: number? = table.find(self._WaitingPlayers, player)
     if position then
         table.remove(self._WaitingPlayers, position)
-    end 
+    end
 end
 
 function LobbyService:CheckReadiness()

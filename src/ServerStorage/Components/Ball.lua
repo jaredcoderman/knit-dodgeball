@@ -92,9 +92,9 @@ end
 
 function Ball:_listenForTouches()
 
-    local playerTrove = Trove.new()
+    self._playerTrove = Trove.new()
     local function DetachFromPlayer()
-        playerTrove:Clean()
+        self._playerTrove:Clean()
     end
     local function GetHand(player: Player)
         local char = player.Character 
@@ -139,15 +139,14 @@ function Ball:_listenForTouches()
                 DebounceThrowOnPickup(player, hand)
             end)
             coroutine.resume(debounceCoro)
-            playerTrove:Add(function()
+            self._playerTrove:Add(function()
                 if self.Instance.Parent then
                     self.Instance.Parent = workspace
                     self.Instance.RigidConstraint.Attachment0 = nil
                 end
                 self:SetPlayer(0)
             end)
-            playerTrove:Add(humanoid.Died:Connect(DetachFromPlayer))
-            playerTrove:Add(Players.PlayerRemoving:Connect(function(playerThatLeft)
+            self._playerTrove:Add(Players.PlayerRemoving:Connect(function(playerThatLeft)
                 if playerThatLeft == player then
                     DetachFromPlayer()
                 end
@@ -166,7 +165,10 @@ function Ball:_listenForTouches()
                         if humanoid.Health > 0 then
                             GetHand(player):Match {
                                 Some = function(hand)
-                                    AttachToPlayerHand(player, hand, humanoid)
+                                    local TeamService = Knit.GetService("TeamService")
+                                    if TeamService:PlayerIsInGame(player) then
+                                        AttachToPlayerHand(player, hand, humanoid)
+                                    end
                                 end;
                                 None = function() end
                             }

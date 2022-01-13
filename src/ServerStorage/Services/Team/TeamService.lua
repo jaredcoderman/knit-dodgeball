@@ -65,13 +65,13 @@ function TeamService:JoinTeam(player: Player, team: string)
 end
 
 function TeamService:AddPlayer(player: Player)
-    local function GetHumanoid()
-        if player.Character then
-            local hum = player.Character:FindFirstChild("Humanoid")
-            return Option.Wrap(hum)
-        end
-        Option.None()
-    end
+    -- local function GetHumanoid()
+    --     if player.Character then
+    --         local hum = player.Character:FindFirstChild("Humanoid")
+    --         return Option.Wrap(hum)
+    --     end
+    --     Option.None()
+    -- end
 
     -- GetHumanoid():Match {
     --     Some = function(humanoid)
@@ -111,6 +111,13 @@ end
 function TeamService:FindTeam(player: Player)
     if table.find(self._TeamRed, player) then return self._TeamRed end
     if table.find(self._TeamBlue, player) then return  self._TeamBlue end
+end
+
+function TeamService:PlayerIsInGame(player: Player)
+    if table.find(self._PlayersOut, player) or not table.find(self._PlayersInGame, player) then
+        return false
+    end
+    return true
 end
 
 function TeamService:SetTeamSizes()
