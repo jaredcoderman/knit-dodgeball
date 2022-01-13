@@ -22,16 +22,15 @@ function GameService:CheckGameStatus()
             blueTeamOut += 1
         end
     end
-    if redTeamOut == teamSize then
+    if redTeamOut == self.TeamService._RedSize then
         GameService.GameOver:Fire("Blue")
-    elseif blueTeamOut == teamSize then
+    elseif blueTeamOut == self.TeamService._BlueSize then
         GameService.GameOver:Fire("Red")
     end
 end
 
 function GameService:StartGame()
     local MapService = Knit.GetService("MapService")
-    print("Game Starting!")
     MapService.TeleportPlayersIn()
     MapService:SpawnBalls()
     MapService.SetCollisionGroups()
@@ -46,6 +45,7 @@ function GameService:KnitStart()
     self.LobbyService = Knit.GetService("LobbyService")
 
     self.TeamService.TeamsFull:Connect(function()
+        self.TeamService:SetTeamSizes()
         self:StartGame()
     end)
     self.TeamService.PlayerGotOut:Connect(function()
