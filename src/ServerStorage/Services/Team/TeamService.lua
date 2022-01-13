@@ -38,7 +38,9 @@ local TeamService = Knit.CreateService {
     _TeamBlue = {
         name = "Blue"
     },
-    _trove = Trove.new()
+    _trove = Trove.new(),
+    _RedSize = 0,
+    _BlueSize = 0
 }
 
 TeamService.TeamsFull = Signal.new()
@@ -47,32 +49,18 @@ TeamService.TeamConfig = require(script.Parent.TeamConfig)
 
 function TeamService:CheckTeamCapacity(team: table)
     local len = _getLengthOfKeyValueTable(team)
-    if len == TeamService.TeamConfig.TEAM_SIZE then
-        local otherTeam
-        if self._TeamRed == team then
-            otherTeam = self._TeamBlue
-        else
-            otherTeam = self._TeamRed
-        end
-        local otherLen = _getLengthOfKeyValueTable(otherTeam)
-        if otherLen == TeamService.TeamConfig.TEAM_SIZE then
-            TeamService.TeamsFull:Fire()
-        end
-        if TeamService.TeamConfig.SOLO_TESTING then
-            TeamService.TeamsFull:Fire()
-        end
-
+    if len >= TeamService.TeamConfig.MAX_TEAM_SIZE then
+        return false
     end
+    return true
 end
 
 function TeamService:JoinTeam(player: Player, team: string)
     if table.find(self._TeamRed, player) or table.find(self._TeamBlue, player) then return end
-    if team == "Red" then 
+    if team == "Red" and self:CheckTeamCapacity(self._TeamRed) then 
         table.insert(self._TeamRed, player)
-        self:CheckTeamCapacity(self._TeamRed)
-    elseif team == "Blue" then
+    elseif team == "Blue" and self:CheckTeamCapacity(self._TeamBlue) then
         table.insert(self._TeamBlue, player)
-        self:CheckTeamCapacity(self._TeamBlue)
     end
 end
 
@@ -85,15 +73,20 @@ function TeamService:AddPlayer(player: Player)
         Option.None()
     end
 
-    GetHumanoid():Match {
-        Some = function(humanoid)
-            self._trove:Add(humanoid.Died:Connect(function()
-                self:GetPlayerOut(player)
-            end))
-        end;
-        None = function() end
-    }
+    -- GetHumanoid():Match {
+    --     Some = function(humanoid)
+    --         self._trove:Add(humanoid.Died:Connect(function()
+    --             self:GetPlayerOut(player)
+    --         end))
+    --     end;
+    --     None = function() end
+    -- }
     table.insert(self._PlayersInGame, player)
+    self._trove:Add(Players.PlayerRemoving:Connect(function(plr: Player)
+        if plr == player then
+            self:GetPlayerOut(player)
+        end
+    end))
 end
 
 function TeamService:GetPlayerIn(player: Player)
@@ -120,21 +113,9 @@ function TeamService:FindTeam(player: Player)
     if table.find(self._TeamBlue, player) then return  self._TeamBlue end
 end
 
-function TeamService:RemovePlayer(player: Player)
-    _removeValueFromTable(self._PlayersInGame, player)
-    local team = self:FindTeam(player)
-    if table.find(self._PlayersOut, player) then
-        _removeValueFromTable(self._PlayersOut, player)
-    end
-    if team then
-        _removeValueFromTable(team, player)
-    end
-end
-
-function TeamService:KnitInit()
-    Players.PlayerRemoving:Connect(function(player: Player)
-        self:RemovePlayer(player)
-    end)
+function TeamService:SetTeamSizes()
+    self._RedSize = _getLengthOfKeyValueTable(self._TeamRed)
+    self._BlueSize = _getLengthOfKeyValueTable(self._TeamBlue)
 end
 
 function TeamService:Reset()
@@ -146,6 +127,8 @@ function TeamService:Reset()
         name = "Blue"
     }
     self._PlayersInGame = {}
+    self._RedSize = 0
+    self._BlueSize = 0
     self._trove:Clean()
 end
 

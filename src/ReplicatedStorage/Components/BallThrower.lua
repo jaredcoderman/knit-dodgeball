@@ -61,15 +61,12 @@ function BallThrower:Start()
         if input.UserInputType == Enum.UserInputType.MouseButton1 and hasBall:Get() and not playedAnimation:Get() then
             GetHand():Match {
                 Some = function(hand)
-                    print(hand.Name)
                     self._comm:GetFunction("PlayThrowAnimation")(hand)
                     task.wait(.3)
                     self:_throw(hand)
                 end;
                 None = function() end
             }
-        else 
-            print(hasBall:Get(), playedAnimation:Get())
         end
     end))
 end

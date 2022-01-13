@@ -42,9 +42,12 @@ function Ball:Construct()
 end
 
 function Ball:_registerHit(player: Player)
+    local TeamService = Knit.GetService("TeamService")
     GetHumanoid(player):Match {
         Some = function(humanoid)
-            humanoid.Health = 0
+            local sound = self.Instance.Hit
+            sound:Play()
+            TeamService:GetPlayerOut(player)
         end;
         None = function() end
     }

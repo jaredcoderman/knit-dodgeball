@@ -18,7 +18,8 @@ local LobbyService = Knit.CreateService {
 
 function LobbyService:AssignPlayers()
     local TeamService = Knit.GetService("TeamService")
-    for i = 1, LobbyConfig.REQUIRED_PLAYERS do
+    print(#self._WaitingPlayers)
+    for i = 1, #self._WaitingPlayers do
         local randomPlayer = self._WaitingPlayers[math.random(1, #self._WaitingPlayers)]
         local position = table.find(self._WaitingPlayers, randomPlayer)
         table.remove(self._WaitingPlayers, position)
@@ -29,6 +30,7 @@ function LobbyService:AssignPlayers()
         end
         TeamService:AddPlayer(randomPlayer)
     end
+    TeamService.TeamsFull:Fire()
 end
 
 function LobbyService:AddPlayer(player: Player)
@@ -51,19 +53,6 @@ function LobbyService:CheckReadiness()
     end
 end
 
-function LobbyService:KnitInit()
-	Players.PlayerAdded:Connect(function(player: Player)
-        player.CharacterAdded:Wait()
-        task.wait()
-		self:AddPlayer(player)
-        self:CheckReadiness()
-	end)
-    
-	Players.PlayerRemoving:Connect(function(player: Player)
-		self:RemovePlayer(player)
-	end)
-end
-
 function LobbyService:ReassignPlayers()
     for _,player in ipairs(Players:GetPlayers()) do
         self:AddPlayer(player)
@@ -80,6 +69,19 @@ function LobbyService:Countdown()
         LobbyService.Client.UpdateCountdown:FireAll(i)
         task.wait(1)
     end
+end
+
+function LobbyService:KnitInit()
+	Players.PlayerAdded:Connect(function(player: Player)
+        player.CharacterAdded:Wait()
+        task.wait()
+		self:AddPlayer(player)
+        self:CheckReadiness()
+	end)
+    
+	Players.PlayerRemoving:Connect(function(player: Player)
+		self:RemovePlayer(player)
+	end)
 end
 
 function LobbyService:KnitStart()
